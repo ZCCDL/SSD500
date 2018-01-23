@@ -16,6 +16,10 @@ class SSD500:
             [1.0, 2.0, 0.5],
             [1.0, 2.0, 0.5]]
         self.scales=getscales(6)
+        self.inp_size=512
+        self.anchor_center=0.5
+
+
         print(self.scales)
     def inference(self):
         conv4 = self.conv4_3
@@ -29,7 +33,7 @@ class SSD500:
 
         with tf.variable_scope("conv7"):
             conv6 = conv3(self.conv5_3, 512, 1024, [1, 1, 1, 1])
-            conv7 = conv1(conv6, 1024, 1024, [1, 2, 2, 1])
+            conv7 = conv1(conv6, 1024, 1024, [1, 1, 1, 1])
             print("conv7=", conv7.get_shape())
 
             featurelayers["conv7"] = conv7
@@ -60,7 +64,15 @@ class SSD500:
             print("conv11=", conv11_2.get_shape())
             featurelayers["conv11"] = conv11_2
 
-        self.final_layer(featurelayers["conv4"], 512, self.num_classes, 4)
+        with tf.variable_scope("conv12"):
+            conv12_1 = conv3(conv11_2, 256, 128, [1, 1, 1, 1])
+            conv12_2 = conv1(conv12_1, 128, 256, [1, 2, 2, 1])
+            print("conv12=", conv12_2.get_shape())
+            featurelayers["conv12"] = conv12_2
+        #todo here
+        self.final_layer(featurelayers["conv4"], 512, self.num_classes, 5)
+        self.final_layer(featurelayers["conv7"], 1024, self.num_classes, 5)
+        self.final_layer(featurelayers["conv8"], 512, self.num_classes, 5)
 
         for i, feat_layer in enumerate(featurelayers.keys()):
             print(i)
