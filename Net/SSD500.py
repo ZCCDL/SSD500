@@ -2,25 +2,30 @@ from Net.common import conv1, conv3, maxpool
 import tensorflow as tf
 from Utils.anchors import getscales
 
+
 class SSD500:
-    def __init__(self, conv4_3, conv5_3, num_classes):
+    def __init__(self,
+                 conv4_3,
+                 conv5_3,
+                 num_classes,
+                 aspect_ratio=[[1.0, 2.0, 0.5],
+                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                                                    [1.0, 2.0, 0.5],
+                                                                    [1.0, 2.0, 0.5]]):
+
         self.conv5_3 = conv5_3
         self.conv4_3 = conv4_3
         self.num_classes = num_classes
-        self.aspect_ratio = [
-            [1.0, 2.0, 0.5],
-            [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-            [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-            [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-            [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-            [1.0, 2.0, 0.5],
-            [1.0, 2.0, 0.5]]
-        self.scales=getscales(6)
-        self.inp_size=512
-        self.anchor_center=0.5
-
+        self.aspect_ratio = aspect_ratio
+        self.scales = getscales(7)
+        self.inp_size = 512
+        self.anchor_center = 0.5
 
         print(self.scales)
+
     def inference(self):
         conv4 = self.conv4_3
 
@@ -69,31 +74,37 @@ class SSD500:
             conv12_2 = conv1(conv12_1, 128, 256, [1, 2, 2, 1])
             print("conv12=", conv12_2.get_shape())
             featurelayers["conv12"] = conv12_2
-        #todo here
-        self.final_layer(featurelayers["conv4"], 512, self.num_classes, 5)
-        self.final_layer(featurelayers["conv7"], 1024, self.num_classes, 5)
-        self.final_layer(featurelayers["conv8"], 512, self.num_classes, 5)
+        # todo here
 
-        for i, feat_layer in enumerate(featurelayers.keys()):
-            print(i)
-            print(feat_layer)
-            print("classes=", self.num_classes)
+        self.logits = {}
+        self.regr = []
 
-        return conv11_2
+        self.cls = []
 
-    def final_layer(self, feature_map, in_filters, classes, num_anchors):
-        out_filters_reg = (num_anchors) * 4
-        out_filters_class = (num_anchors) * classes
+        self.logits["conv4"] = self.final_layer(featurelayers["conv4"], 512, self.num_classes, 5)
+        self.logits["conv7"] = self.final_layer(featurelayers["conv7"], 1024, self.num_classes, 5)
+        self.logits["conv8"] = self.final_layer(featurelayers["conv8"], 512, self.num_classes, 5)
+        self.logits["conv9"] = self.final_layer(featurelayers["conv9"], 256, self.num_classes, 5)
+        self.logits["conv10"] = self.final_layer(featurelayers["conv10"], 256, self.num_classes, 5)
+        self.logits["conv11"] = self.final_layer(featurelayers["conv11"], 256, self.num_classes, 5)
+        self.logits["conv12"] = self.final_layer(featurelayers["conv12"], 256, self.num_classes, 5)
+
+        return self.logits
+
+    def final_layer(self, feature_map, in_filters, classes, num_ratios):
+        out_filters_reg = (num_ratios) * 4
+        out_filters_class = (num_ratios) * classes
 
         regression = conv3(feature_map, in_filters, out_filters_reg, [1, 1, 1, 1])
-        shape = regression.get_shape().as_list()[:-1] + [num_anchors, 4]
+        shape = regression.get_shape().as_list()[:-1] + [num_ratios, 4]
         regression = tf.reshape(regression, shape)
         print("regression=", regression.get_shape())
+        self.regr.append(regression)
 
         logits = conv3(feature_map, in_filters, out_filters_class, [1, 1, 1, 1])
-        shape = logits.get_shape().as_list()[:-1] + [num_anchors, classes]
+        shape = logits.get_shape().as_list()[:-1] + [num_ratios, classes]
         logits = tf.reshape(logits, shape)
-
         print("class_score=", logits.get_shape())
+        self.cls.append(logits)
 
         return logits, regression
