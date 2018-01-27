@@ -1,14 +1,14 @@
 
-*.xml
-*.xml
 .idea/inspectionProfiles/Project_Default.xml
 Utils/__pycache__/__init__.cpython-36.pyc
 Utils/__pycache__/anchors.cpython-36.pyc
 Net/__pycache__/VGG.cpython-36.pyc
 Net/__pycache__/SSD500.cpython-36.pyc
 *.pyc
-*.xml
 .idea/inspectionProfiles/Project_Default.xml
 .idea/inspectionProfiles/Project_Default.xml
 .idea/vcs.xml
 .idea/SSD500.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml

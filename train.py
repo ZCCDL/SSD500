@@ -15,7 +15,7 @@ ckpt_dir = "ckpt/"
 ckpt_steps = 5000
 load = -1
 gpu = 0.3
-lr = 1e-03
+lr = 1e-04
 
 # print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
 
