@@ -49,7 +49,7 @@ class VGG:
             conv5_1 = conv3(pool4, 512, 512, [1, 1, 1, 1])
             conv5_2 = conv3(conv5_1, 512, 512, [1, 1, 1, 1])
             conv5_3 = conv3(conv5_2, 512, 512, [1, 1, 1, 1])
-            pool5=maxpool(conv5_3,[1,2,2,1],[1,2,2,1])
+            #pool5=maxpool(conv5_3,[1,2,2,1],[1,2,2,1])
             #print(pool5.get_shape())
 
-        return conv4_3,pool5
+        return conv4_3,conv5_3
