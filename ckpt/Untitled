@@ -1,0 +1,12 @@
+python main.py -1 /home2/noman/Segnetckpts 0.5 1e-4 100
+python test.py 10000 /home2/noman/Segnetckpts
+export CUDA_VISIBLE_DEVICES=1
+
+python main.py -1 /home2/noman/segnetchkpt2 0.5 1e-4 4000 8
+python test.py 10000 /home2/noman/segnetchkpt2
+
+tmux kill-session -t 0
+tmux attach -t 0
+tmux ls
+
+rsync -avz --progress  nouman@25.39.232.170:/home2/noman/Segnet/results  .
