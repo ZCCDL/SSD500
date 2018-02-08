@@ -89,6 +89,9 @@ with tf.Session(config=session_config) as sess:
         # encode the ground truth into anchors
         batch_encodes_c, batch_encodes_r, batch_encodes_iou = encode_layers(batchsize, labels, feature_map_sizes,
                                                                             ssd500.scales, aspect_ratio)
+
+        batch_encodes_c[0][batch_encodes_c[0]>0]=1
+
         # visual(img[0],batch_encodes_r[0],batch_encodes_iou,aspect_ratio,getscales(7))
 
         _, loss = sess.run([train_step, loss_op], feed_dict={train_batch: img,

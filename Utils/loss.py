@@ -53,8 +53,8 @@ def tloss(groundtruth_c, groundtruth_r, logits_c, logits_r):
         '''Negative mask'''
         nmask_cond = true_c == 0
         neg_mask = tf.cast(nmask_cond, tf.float32)
-        print(true_c)
         classification_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=pred_c, labels=true_c)
+        print("vgbhjfcvghbvfgb")
 
         '''Positive anchors loss'''
         positive_class_loss = classification_loss * pos_mask
