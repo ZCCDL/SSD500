@@ -66,12 +66,12 @@ def tloss(groundtruth_c, groundtruth_r, logits_c, logits_r):
 
         '''Reshape find max loss indexes and change back to origial shape'''
         shape = negative_class_loss.get_shape()
-        flat_neg_losses = tf.reshape(negative_class_loss, (shape[0] * shape[1] * shape[2] * shape[3]))
+        flat_neg_losses = tf.reshape(negative_class_loss,tf.TensorShape ([shape[0] * shape[1] * shape[2] * shape[3]]))
         values, indices = tf.nn.top_k(flat_neg_losses, n_negative_keep)
         negatives_keep = tf.scatter_nd(tf.expand_dims(indices, axis=1),
                                        updates=tf.ones_like(indices, dtype=tf.int32),
                                        shape=tf.shape(flat_neg_losses))
-        negatives_keep = tf.to_float(tf.reshape(negatives_keep, [shape[0], shape[1], shape[2], shape[3]]))
+        negatives_keep = tf.to_float(tf.reshape(negatives_keep, tf.TensorShape ([shape[0], shape[1], shape[2], shape[3]])))
 
         '''Neg Loss'''
         neg_class_loss = tf.reduce_sum(classification_loss * negatives_keep)  # Tensor of shape (batch_size,)
