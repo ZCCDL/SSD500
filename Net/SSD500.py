@@ -8,14 +8,8 @@ class SSD500:
                  conv4_3,
                  conv5_3,
                  num_classes,
-                 aspect_ratio=[[1.0, 2.0, 0.5],
-                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-                                                                    [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
-                                                                    [1.0, 2.0, 0.5],
-                                                                    [1.0, 2.0, 0.5]]):
-
+                 aspect_ratio=[1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                 ):
         self.conv5_3 = conv5_3
         self.conv4_3 = conv4_3
         self.num_classes = num_classes
@@ -40,6 +34,7 @@ class SSD500:
             conv6 = conv3(self.conv5_3, 512, 1024, [1, 1, 1, 1])
             conv7 = conv1(conv6, 1024, 1024, [1, 1, 1, 1])
             print("conv7=", conv7.get_shape())
+
 
             featurelayers["conv7"] = conv7
 
@@ -88,8 +83,6 @@ class SSD500:
         self.logits["conv10"] = self.final_layer(featurelayers["conv10"], 256, self.num_classes, 5)
         self.logits["conv11"] = self.final_layer(featurelayers["conv11"], 256, self.num_classes, 5)
         self.logits["conv12"] = self.final_layer(featurelayers["conv12"], 256, self.num_classes, 5)
-
-        return self.logits
 
     def final_layer(self, feature_map, in_filters, classes, num_ratios):
         out_filters_reg = (num_ratios) * 4

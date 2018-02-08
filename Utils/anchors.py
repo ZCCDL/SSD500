@@ -8,13 +8,13 @@ def getscales(m):
     scales = []
     for k in range(1, m + 1):
         min = 0.02
-        max = 0.90
+        max = 0.8
         scales.append((min + (((max - min) / (m - 1)) * (k - 1))))
     #print("Scales=",scales)
     return scales
 
 
-def gen_anchor_for_1_layer(feature_map_size, scale,aspect_ratios,img_size=512 ):
+def gen_anchor_for_1_layer(feature_map_size, scale,aspect_ratios,img_size=512):
 
     y,x=np.mgrid[0:feature_map_size, 0:feature_map_size]
     y=(y.astype(np.float32)+0.5)*(img_size/feature_map_size)/img_size

@@ -13,6 +13,8 @@ def read_frame(filname, img_path="", ann_path=""):
     # cv2.imshow("img",img)
     # cv2.waitKey(0)
 
+    img=img/255
+
     # actual parsing
     in_file = open(ann_path)
     tree = ET.parse(in_file)
