@@ -2,15 +2,14 @@ from Net.common import conv1, conv3, maxpool
 import tensorflow as tf
 from Utils.anchors import getscales
 
-
 class SSD500:
     def __init__(self,
                  conv4_3,
-                 conv5_3,
+                 pool5,
                  num_classes,
                  aspect_ratio=[1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
                  ):
-        self.conv5_3 = conv5_3
+        self.pool5 = pool5
         self.conv4_3 = conv4_3
         self.num_classes = num_classes
         self.aspect_ratio = aspect_ratio
@@ -28,13 +27,15 @@ class SSD500:
         featurelayers["conv4"] = conv4
 
         print("conv4=", conv4.get_shape())
-        print("conv5=", self.conv5_3.get_shape())
+        print("conv5=", self.pool5.get_shape())
 
         with tf.variable_scope("conv7"):
-            conv6 = conv3(self.conv5_3, 512, 1024, [1, 1, 1, 1])
+            #tf.layers.conv2d(self.pool5, filters=[1024], kernel_size=[3, 3], strides=[1, 1], dilation_rate=(6, 6),
+            #                 activation='relu', padding="same", kernel_initializer='he_normal',kernel_regularizer)
+
+            conv6 = conv3(self.pool5, 512, 1024, [1, 1, 1, 1])
             conv7 = conv1(conv6, 1024, 1024, [1, 1, 1, 1])
             print("conv7=", conv7.get_shape())
-
 
             featurelayers["conv7"] = conv7
 
@@ -85,10 +86,12 @@ class SSD500:
         self.logits["conv12"] = self.final_layer(featurelayers["conv12"], 256, self.num_classes, 5)
 
     def final_layer(self, feature_map, in_filters, classes, num_ratios):
+
         out_filters_reg = (num_ratios) * 4
         out_filters_class = (num_ratios) * classes
 
         regression = conv3(feature_map, in_filters, out_filters_reg, [1, 1, 1, 1])
+
         shape = regression.get_shape().as_list()[:-1] + [num_ratios, 4]
         regression = tf.reshape(regression, shape)
         print("regression=", regression.get_shape())

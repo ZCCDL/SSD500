@@ -18,24 +18,24 @@ ckpt_dir = "ckpt/"
 ckpt_steps = 5000
 load = -1
 gpu = 0.3
-lr = 1e-04
+lr = 0.001
 
 # print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
 
 # python main.py -1 ckpt 0.5 1e-4 100
-print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
+#print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
 
 # python main.py -1 ckpt 0.5 1e-4 100
 
-
-load=int(sys.argv[1])
-ckpt_dir=sys.argv[2]
-gpu=float(sys.argv[3])
-lr=float(sys.argv[4])
-ckpt_steps=int(sys.argv[5])
-batchsize=int(sys.argv[6])
-#imgdir=sys.argv[7]
-#groundtruth=sys.argv[8]
+#
+# load=int(sys.argv[1])
+# ckpt_dir=sys.argv[2]
+# gpu=float(sys.argv[3])
+# lr=float(sys.argv[4])
+# ckpt_steps=int(sys.argv[5])
+# batchsize=int(sys.argv[6])
+# #imgdir=sys.argv[7]
+# #groundtruth=sys.argv[8]
 
 assert (os.path.exists(ckpt_dir))
 assert (os.path.exists(imgdir))
@@ -72,8 +72,10 @@ gt_reg = (gt_reg64, gt_reg32, gt_reg16, gt_reg8, gt_reg4, gt_reg2, gt_reg1)
 
 vgg = VGG()
 conv4_3, conv5_3 = vgg.inference(train_batch)
-ssd500 = SSD500(conv4_3=conv4_3, conv5_3=conv5_3, num_classes=numclasses)
+
+ssd500 = SSD500(conv4_3=conv4_3, pool5=conv5_3, num_classes=numclasses)
 ssdinfer = ssd500.inference()
+
 
 loss_op = tloss(gt_cls, gt_reg, ssd500.cls, ssd500.regr)
 optimizer = tf.train.AdamOptimizer(lr)

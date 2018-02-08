@@ -35,7 +35,9 @@ def tloss(groundtruth_c, groundtruth_r, logits_c, logits_r):
     total_reg_loss = 0.0
     n_pos = 0
 
-    for i in range(0, len(groundtruth_c)):
+    #for i in range(0, len(groundtruth_c)):
+    for i in range(0, 1):
+
         pred_c = logits_c[i]
         pred_r = logits_r[i]
         true_c = groundtruth_c[i]
