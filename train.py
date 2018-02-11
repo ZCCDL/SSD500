@@ -23,7 +23,7 @@ lr = 0.001
 # print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
 
 # python main.py -1 ckpt 0.5 1e-4 100
-#print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
+# print("--loadfrom;",sys.argv[1]," --ckptdir;",sys.argv[2]," --gpu",sys.argv[3]," --lr", sys.argv[4],"save",sys.argv[5])
 
 # python main.py -1 ckpt 0.5 1e-4 100
 
@@ -40,8 +40,6 @@ lr = 0.001
 assert (os.path.exists(ckpt_dir))
 assert (os.path.exists(imgdir))
 assert (os.path.exists(groundtruth))
-
-
 
 param = 2
 feature_map_sizes = [64, 32, 16, 8, 4, 2, 1]
@@ -72,34 +70,47 @@ gt_reg = (gt_reg64, gt_reg32, gt_reg16, gt_reg8, gt_reg4, gt_reg2, gt_reg1)
 
 vgg = VGG()
 conv4_3, conv5_3 = vgg.inference(train_batch)
-
 ssd500 = SSD500(conv4_3=conv4_3, pool5=conv5_3, num_classes=numclasses)
 ssdinfer = ssd500.inference()
-
 
 loss_op = tloss(gt_cls, gt_reg, ssd500.cls, ssd500.regr)
 optimizer = tf.train.AdamOptimizer(lr)
 train_step = optimizer.minimize(loss_op)
 
 init = tf.global_variables_initializer()
+
+writer = tf.summary.FileWriter("summary/")
+mergedsummary = tf.summary.merge_all()
 with tf.Session(config=session_config) as sess:
     sess.run(init)
+    i=0
     while True:
+        i+=1
+
         img, labels = prepare_batch(batchsize, imgdir, groundtruth)
         # encode the ground truth into anchors
         batch_encodes_c, batch_encodes_r, batch_encodes_iou = encode_layers(batchsize, labels, feature_map_sizes,
                                                                             ssd500.scales, aspect_ratio)
 
-        batch_encodes_c[0][batch_encodes_c[0]>0]=1
+        #batch_encodes_c[0][batch_encodes_c[0] > 0] = 1
+        #batch_encodes_r[0][batch_encodes_r[0] > 0] = 1
 
         # visual(img[0],batch_encodes_r[0],batch_encodes_iou,aspect_ratio,getscales(7))
 
         _, loss = sess.run([train_step, loss_op], feed_dict={train_batch: img,
-                                                            gt_reg: batch_encodes_r,
-                                                            gt_cls: batch_encodes_c,
-                                                            })
+                                                             gt_reg: batch_encodes_r,
+                                                             gt_cls: batch_encodes_c,
+                                                             })
+        tf.summary.scalar("loss",loss)
 
-        print("Step loss=", loss)
+        s = sess.run(mergedsummary, feed_dict={train_batch: img,
+                                               gt_reg: batch_encodes_r,
+                                               gt_cls: batch_encodes_c,
+                                               })
+        writer.add_summary(s,i)
+        writer.add_graph(sess.graph)
+
+        print("Step <",i,"> loss => ", loss)
         # print(logits.keys())
 
         # print(logits["conv4"][0].shape)

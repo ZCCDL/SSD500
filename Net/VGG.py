@@ -36,9 +36,10 @@ class VGG:
 
         with tf.variable_scope("conv_4"):
 
-            conv4_1 = conv3(pool3, 256, 512, [1, 1, 1, 1])
-            conv4_2 = conv3(conv4_1, 512, 512, [1, 1, 1, 1])
-            conv4_3 = conv3(conv4_2, 512, 512, [1, 1, 1, 1])
+            conv4_1 = conv3(pool3, 256, 512, [1, 1, 1, 1],"conv_4_1")
+            conv4_2 = conv3(conv4_1, 512, 512, [1, 1, 1, 1],"conv_4_2")
+            conv4_3 = conv3(conv4_2, 512, 512, [1, 1, 1, 1],"conv_4_3")
+
             print("4_3=",conv4_3.get_shape())
 
             pool4 = maxpool(conv4_3, [1, 2, 2, 1], [1, 2, 2, 1])
