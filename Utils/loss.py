@@ -18,8 +18,8 @@ def tloss(groundtruth_c, groundtruth_r, logits_c, logits_r):
     total_reg_loss = []
     n_pos = 0
 
-    #for i in range(0, len(groundtruth_c)):
-    for i in range(0, 1):
+    for i in range(0, len(groundtruth_c)):
+    #for i in range(0, 1):
         pred_c = logits_c[i]
         pred_r = logits_r[i]
         true_c = groundtruth_c[i]
@@ -80,5 +80,7 @@ def tloss(groundtruth_c, groundtruth_r, logits_c, logits_r):
             total_loss+=total_reg_loss[i]+total_class_loss[i]
 
         total_loss=total_loss/ tf.cast(n_pos, dtype=tf.float32)
+        tf.summary.scalar("loss",total_loss)
+
 
     return total_loss

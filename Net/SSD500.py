@@ -71,11 +71,11 @@ class SSD500:
             conv12_2 = conv1(conv12_1, 128, 256, [1, 2, 2, 1])
             print("conv12=", conv12_2.get_shape())
             featurelayers["conv12"] = conv12_2
-        # todo here
+        # todo Dilate all the layers
 
         self.logits = {}
         self.regr = []
-
+        self.pred=[]
         self.cls = []
         with tf.variable_scope("reg-cls-head-4"):
 
@@ -92,6 +92,8 @@ class SSD500:
             self.logits["conv11"] = self.final_layer(featurelayers["conv11"], 256, self.num_classes, 5)
         with tf.variable_scope("reg-cls-head-12"):
             self.logits["conv12"] = self.final_layer(featurelayers["conv12"], 256, self.num_classes, 5)
+
+        return self.cls,self.regr,self.pred
 
     def final_layer(self, feature_map, in_filters, classes, num_ratios):
         out_filters_reg = (num_ratios) * 4
@@ -111,5 +113,6 @@ class SSD500:
             logits = tf.reshape(logits, shape)
             print("class_score=", logits.get_shape())
             self.cls.append(logits)
+            self.pred.append(tf.arg_max(tf.nn.softmax(logits),dimension=4))
 
         return logits, regression

@@ -15,7 +15,7 @@ imgdir = "JPEGImages/"
 groundtruth = "Annotations/"
 total_steps = 1000000
 ckpt_dir = "ckpt/"
-ckpt_steps = 5000
+ckpt_steps = 1000
 load = -1
 gpu = 0.3
 lr = 0.001
@@ -74,6 +74,7 @@ ssd500 = SSD500(conv4_3=conv4_3, pool5=conv5_3, num_classes=numclasses)
 ssdinfer = ssd500.inference()
 
 loss_op = tloss(gt_cls, gt_reg, ssd500.cls, ssd500.regr)
+
 optimizer = tf.train.AdamOptimizer(lr)
 train_step = optimizer.minimize(loss_op)
 
@@ -81,11 +82,16 @@ init = tf.global_variables_initializer()
 
 writer = tf.summary.FileWriter("summary/")
 mergedsummary = tf.summary.merge_all()
+saver = tf.train.Saver()
+
 with tf.Session(config=session_config) as sess:
     sess.run(init)
-    i=0
+    start = 0
+    if load > 0:
+        print("Restoring", load, ".ckpt.....")
+        saver.restore(sess, os.path.join(ckpt_dir, str(load)))
+        start = load
     while True:
-        i+=1
 
         img, labels = prepare_batch(batchsize, imgdir, groundtruth)
         # encode the ground truth into anchors
@@ -101,16 +107,25 @@ with tf.Session(config=session_config) as sess:
                                                              gt_reg: batch_encodes_r,
                                                              gt_cls: batch_encodes_c,
                                                              })
-        tf.summary.scalar("loss",loss)
 
-        s = sess.run(mergedsummary, feed_dict={train_batch: img,
+        if start% 50==0:
+            s = sess.run(mergedsummary, feed_dict={train_batch: img,
                                                gt_reg: batch_encodes_r,
                                                gt_cls: batch_encodes_c,
                                                })
-        writer.add_summary(s,i)
+            writer.add_summary(s,start)
+            print("writing summary")
+
         writer.add_graph(sess.graph)
 
-        print("Step <",i,"> loss => ", loss)
-        # print(logits.keys())
+        print("Step <",start,"> loss => ", loss)
+        if start % ckpt_steps == 0 and start != ckpt_steps:
+            print("saving checkpoint ", str(start), ".ckpt.....")
+
+            save_path = saver.save(sess, os.path.join(ckpt_dir, str(start)))
+
+        start += 1
+
+            # print(logits.keys())
 
         # print(logits["conv4"][0].shape)

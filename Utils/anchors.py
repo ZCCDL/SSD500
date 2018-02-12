@@ -2,13 +2,14 @@ import numpy as np
 import math
 import cv2
 import random
+import tensorflow as tf
 
 
 def getscales(m):
     scales = []
     for k in range(1, m + 1):
-        min = 0.02
-        max = 0.8
+        min = 0.015
+        max = 0.4
         scales.append((min + (((max - min) / (m - 1)) * (k - 1))))
     #print("Scales=",scales)
     return scales

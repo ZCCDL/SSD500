@@ -24,7 +24,7 @@ def conv3(inputlayers, fil_in, fil_out, stride,name="conv",activation="RELU"):
     if activation!="RELU":
         return conv_bias
 
-    activations=tf.nn.relu(conv_bias)
+    activations=tf.nn.relu(tf.layers.batch_normalization(conv_bias))
     tf.summary.histogram("_activations", activations)
 
     return activations
@@ -41,7 +41,7 @@ def conv1(inputlayers, fil_in, fil_out, stride,activation="RELU"):
     if activation!="RELU":
         return conv_bias
 
-    activations=tf.nn.relu(conv_bias)
+    activations=tf.nn.relu(tf.layers.batch_normalization(conv_bias))
     tf.summary.histogram("_activations", activations)
 
     return activations

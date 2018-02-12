@@ -12,7 +12,6 @@ def read_frame(filname, img_path="", ann_path=""):
     img = cv2.imread(img_path)
     # cv2.imshow("img",img)
     # cv2.waitKey(0)
-
     img=img/255
 
     # actual parsing

@@ -13,3 +13,8 @@ Net/__pycache__/SSD500.cpython-36.pyc
 .idea/modules.xml
 .idea/workspace.xml
 .DS_Store
+summary/events.out.tfevents.1518461884.Nomans-MBP
+summary/events.out.tfevents.1518462042.Nomans-MBP
+ckpt/0.data-00000-of-00001
+ckpt/0.index
+ckpt/0.meta

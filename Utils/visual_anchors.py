@@ -1,21 +1,21 @@
 import cv2
 import random
-def visual(img,anchors,ious,aspectratio,scales):
-    print(len(anchors))
+from Utils.anchors import gen_anchor_for_1_layer
+def visual(img, encodes, ious, aspectratio, scales):
+    print(len(encodes))
     for img,mat in enumerate(img):
         for feat in range(0,7):
-            print(anchors[feat].shape)
-            for i in range(0,anchors[feat].shape[1]):
-                for j in range(0, anchors[feat].shape[2]):
-                    for k in range(0, anchors[feat].shape[3]):
-                        x=anchors[feat][img][i][j][k][0]
-                        y=anchors[feat][img][i][j][k][1]
-                        w=anchors[feat][img][i][j][k][2]
-                        h=anchors[feat][img][i][j][k][3]
+            print(encodes[feat].shape)
+            for i in range(0, encodes[feat].shape[1]):
+                for j in range(0, encodes[feat].shape[2]):
+                    for k in range(0, encodes[feat].shape[3]):
+                        x=encodes[feat][img][i][j][k][0]
+                        y=encodes[feat][img][i][j][k][1]
+                        w=encodes[feat][img][i][j][k][2]
+                        h=encodes[feat][img][i][j][k][3]
 
                         if(ious[feat][img][i][j][k]>0):
                             print("-",i,j,x, y, w, h,ious[feat][img][i][j][k])
-
                         x=x*512
                         y=y*512
                         w=w*512

@@ -12,7 +12,7 @@ gpu = 0.3
 lr = 1e-04
 
 param=1
-feature_map_sizes = [64, 32*param*2, 16*param*4, 8*param*8, 4*param*16, 2*param*32, 1*param*64]
+feature_map_sizes = [64, 32, 16, 8, 4, 2, 1]
 numclasses = 2
 aspect_ratio = [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0]
 
@@ -28,5 +28,3 @@ batch_encodes_c, batch_encodes_r, batch_encodes_iou = encode_layers(batchsize, l
 
 
 visual(img, batch_encodes_r, batch_encodes_iou, aspect_ratio, getscales(7))
-
-

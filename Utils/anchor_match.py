@@ -9,6 +9,9 @@ import math
 import tensorflow as tf
 
 
+#from Utils.encode_layer import encode_labels_1_layer
+
+
 def encode_labels_1_layer(labels, anchors):
     ax = anchors[0]
     ay = anchors[1]
@@ -19,7 +22,6 @@ def encode_labels_1_layer(labels, anchors):
     en_labels = np.zeros((ax.shape[0], ax.shape[1], len(aw)), dtype=np.int64)
     for i in range(ax.shape[0]):
         for j in range(ax.shape[1]):
-
             for k in range(len(aw)):
 
                 # anchor box x,w,w,h
@@ -31,9 +33,16 @@ def encode_labels_1_layer(labels, anchors):
                 # bbox xmin,ymin,xmax,ymax
                 a_xmin = d_cx - d_w
                 a_xmax = d_cx + d_w
-
                 a_ymin = d_cy - d_h
                 a_ymax = d_cy + d_h
+                if a_xmin<0:
+                    a_xmin=0
+                if a_ymin<0:
+                    a_ymin=0
+                if a_xmax>512:
+                    a_xmax=512
+                if a_ymax>512:
+                    a_ymax=512
 
                 # print(axa)
                 # print(ax[i][j][0])
@@ -48,7 +57,7 @@ def encode_labels_1_layer(labels, anchors):
                     iou = bb_intersection_over_union([g_xmin, g_ymin, g_xmax, g_ymax], [a_xmin, a_ymin, a_xmax, a_ymax])
                     # print("iou=", iou)
 
-                    if iou > ious[i][j][k] and iou > 0.5:
+                    if iou > ious[i][j][k] and iou > 0.4:
                         ious[i][j][k] = iou
 
                         cx = (g_cx - d_cx) / d_w
@@ -75,6 +84,7 @@ def encode_labels_1_layer(labels, anchors):
     return bboxes, en_labels, ious
 
 
+
 def encode_layers(batchsize, batch_labels, featuremap_widths, scales, ratios):
     batch_encodes_c = []
     batch_encodes_r = []
@@ -90,7 +100,6 @@ def encode_layers(batchsize, batch_labels, featuremap_widths, scales, ratios):
         for labels in batch_labels:
 
             box, encoded_labels, ious = encode_labels_1_layer(labels, anchors)
-
             encoded_bbox.append(box)
             encoded_class.append(encoded_labels)
             encoded_iou.append(ious)
