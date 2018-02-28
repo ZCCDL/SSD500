@@ -123,7 +123,7 @@ def get_anchors_all_layers(featuremap_widths, scales, ratios):
 def equilize(batch_labels,batch_bboxes):
     max=0
     for batch in batch_labels:
-        print(batch)
+        #print(batch)
         b_len=len(batch)
         if b_len>max:
             max=b_len
@@ -161,7 +161,7 @@ def fetch_data( img_dir, ann_dir,batch_size):
             batch_labels.append(labels)
 
             if len(batch_img) == batch_size:
-                print(batch_bboxes)
+                #print(batch_bboxes)
                 batch_labels,batch_bboxes=equilize(batch_labels,batch_bboxes)
 
                 #print(batch_labels[0])

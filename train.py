@@ -37,6 +37,7 @@ ckpt_steps=int(sys.argv[5])
 batchsize=int(sys.argv[6])
 imgdir=sys.argv[7]
 groundtruth=sys.argv[8]
+weights_file=sys.argv[9]
 assert (os.path.exists(ckpt_dir))
 assert (os.path.exists(imgdir))
 assert (os.path.exists(groundtruth))
@@ -96,7 +97,7 @@ with tf.Session(config=session_config) as sess:
 
         img, labels, bboxes = prepare_batch(imgdir, groundtruth, batchsize)
 
-        print(img[0].shape)
+        print(img[0].shape, end="")
         # print(img)
         # encode the ground truth into anchors
         # batch_encodes_c, batch_encodes_r, batch_encodes_iou = encode_layers(batchsize, labels, feature_map_sizes,
