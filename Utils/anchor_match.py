@@ -11,7 +11,7 @@ import tensorflow as tf
 
 #from Utils.encode_layer import encode_labels_1_layer
 
-
+'''
 def encode_labels_1_layer(labels, anchors):
     ax = anchors[0]
     ay = anchors[1]
@@ -85,6 +85,7 @@ def encode_labels_1_layer(labels, anchors):
 
 
 
+
 def encode_layers(batchsize, batch_labels, featuremap_widths, scales, ratios):
     batch_encodes_c = []
     batch_encodes_r = []
@@ -111,9 +112,34 @@ def encode_layers(batchsize, batch_labels, featuremap_widths, scales, ratios):
         # print("test", np.array(encoded_local).shape)
 
     return batch_encodes_c, batch_encodes_r, batch_encodes_iou
+'''
+def get_anchors_all_layers(featuremap_widths, scales, ratios):
+    anchors = []
+
+    for i, width in enumerate(featuremap_widths):
+        anchors.append(gen_anchor_for_1_layer(width, scales[i], ratios))
+    return anchors
+
+def equilize(batch_labels,batch_bboxes):
+    max=0
+    for batch in batch_labels:
+        print(batch)
+        b_len=len(batch)
+        if b_len>max:
+            max=b_len
+
+    for i,batch in enumerate(batch_labels):
+        for j in range(len(batch),max):
+            batch_labels[i].append([0])
+            batch_bboxes[i].append([0.01,0.01,0.01,0.01])
 
 
-def fetch_data(batch_size, img_dir, ann_dir):
+
+
+    return batch_labels,batch_bboxes
+
+def fetch_data( img_dir, ann_dir,batch_size):
+    batch_bboxes = []
     batch_labels = []
     batch_img = []
     filenames = os.listdir(img_dir)
@@ -125,22 +151,33 @@ def fetch_data(batch_size, img_dir, ann_dir):
                 continue
 
             print(filename, end=" ")
-            img, labels = read_frame(filename, img_dir, ann_dir)
+            img, img_w, img_h, labels, bbox = read_frame(filename, img_dir, ann_dir)
             img = cv2.resize(img, (512, 512))
 
-            batch_labels.append(convert_labels_to_xyhw(labels))
+            #print(labels)
+
+            batch_bboxes.append(convert_labels_to_xyhw(bbox,img_w,img_h))
             batch_img.append(img)
+            batch_labels.append(labels)
 
             if len(batch_img) == batch_size:
-                yield batch_img, batch_labels
-                batch_labels = []
+                print(batch_bboxes)
+                batch_labels,batch_bboxes=equilize(batch_labels,batch_bboxes)
+
+                #print(batch_labels[0])
+                #print(batch_labels[1])
+                yield batch_img, batch_labels,batch_bboxes
+                batch_bboxes = []
                 batch_img = []
+                batch_labels=[]
 
 
 def prepare_batch(img_dir, ground_truth_dir, batch_size):
     batch = fetch_data(img_dir, ground_truth_dir, batch_size)
 
-    for image, labels in batch:
+    for image, labels,bboxes in batch:
         # print(image)
         # print(labels)
-        return image, labels
+        return image, labels,bboxes
+
+#prepare_batch("../JPEGImages","../Annotations",2)

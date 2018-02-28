@@ -1,6 +1,5 @@
 import tensorflow as tf
 
-from Utils.anchors import gen_anchor_for_1_layer, getscales
 
 
 def tf_ssd_bboxes_encode_layer(labels,
@@ -53,25 +52,11 @@ def tf_ssd_bboxes_encode_layer(labels,
         jaccard = tf.div(inter_vol, union_vol)
         return jaccard
 
-    def intersection_with_anchors(bbox):
-        """Compute intersection between score a box and the anchors.
-        """
-        int_ymin = tf.maximum(ymin, bbox[0])
-        int_xmin = tf.maximum(xmin, bbox[1])
-        int_ymax = tf.minimum(ymax, bbox[2])
-        int_xmax = tf.minimum(xmax, bbox[3])
-        h = tf.maximum(int_ymax - int_ymin, 0.)
-        w = tf.maximum(int_xmax - int_xmin, 0.)
-        inter_vol = h * w
-        scores = tf.div(inter_vol, vol_anchors)
-        return scores
-
     def condition(i, feat_labels, feat_scores,
                   feat_ymin, feat_xmin, feat_ymax, feat_xmax):
         """Condition: check label index.
         """
-        return  i < tf.shape(labels)[0]
-
+        return i < tf.shape(labels)[0]
 
     def body(i, feat_labels, feat_scores,
              feat_ymin, feat_xmin, feat_ymax, feat_xmax):
@@ -80,25 +65,32 @@ def tf_ssd_bboxes_encode_layer(labels,
           - assign values when jaccard > 0.5;
           - only update if beat the score of other bboxes.
         """
-        # Jaccard score.
-        label = labels[i]
-        bbox = bboxes[i]
-        jaccard = jaccard_with_anchors(bbox)
-        # Mask: check threshold + scores + no annotations + num_classes.
-        mask = tf.greater(jaccard, feat_scores)
-        # mask = tf.logical_and(mask, tf.greater(jaccard, matching_threshold))
-        mask = tf.logical_and(mask, feat_scores > -0.5)
-        mask = tf.logical_and(mask, label < num_classes)
-        imask = tf.cast(mask, tf.int64)
-        fmask = tf.cast(mask, dtype)
-        # Update values using mask.
-        feat_labels = imask * label + (1 - imask) * feat_labels
-        feat_scores = tf.where(mask, jaccard, feat_scores)
+        with tf.name_scope("jacard"):
+            # Jaccard score.
+            label = labels[i]
+            bbox = bboxes[i]
+            jaccard = jaccard_with_anchors(bbox)
+            print("jacard-", jaccard.get_shape())
 
-        feat_ymin = fmask * bbox[0] + (1 - fmask) * feat_ymin
-        feat_xmin = fmask * bbox[1] + (1 - fmask) * feat_xmin
-        feat_ymax = fmask * bbox[2] + (1 - fmask) * feat_ymax
-        feat_xmax = fmask * bbox[3] + (1 - fmask) * feat_xmax
+        with tf.name_scope("masks"):
+            # Mask: check threshold + scores + no annotations + num_classes.
+            mask = tf.greater(jaccard, feat_scores)
+            # mask = tf.logical_and(mask, tf.greater(jaccard, matching_threshold))
+            mask = tf.logical_and(mask, feat_scores > -0.5)
+            mask = tf.logical_and(mask, label < num_classes)
+            imask = tf.cast(mask, tf.int64)
+            fmask = tf.cast(mask, dtype)
+
+        with tf.name_scope("val_update"):
+            # Update values using mask.
+            feat_labels = imask * label + (1 - imask) * feat_labels
+            feat_scores = tf.where(mask, jaccard, feat_scores)
+
+        with tf.name_scope("matches"):
+            feat_ymin = fmask * bbox[0] + (1 - fmask) * feat_ymin
+            feat_xmin = fmask * bbox[1] + (1 - fmask) * feat_xmin
+            feat_ymax = fmask * bbox[2] + (1 - fmask) * feat_ymax
+            feat_xmax = fmask * bbox[3] + (1 - fmask) * feat_xmax
 
         # Check no annotation label: ignore these anchors...
         # interscts = intersection_with_anchors(bbox)
@@ -111,13 +103,18 @@ def tf_ssd_bboxes_encode_layer(labels,
                 feat_ymin, feat_xmin, feat_ymax, feat_xmax]
 
     # Main loop definition.
-    i = 0
+    i = tf.constant(0)
     [i, feat_labels, feat_scores,
      feat_ymin, feat_xmin,
      feat_ymax, feat_xmax] = tf.while_loop(condition, body,
                                            [i, feat_labels, feat_scores,
                                             feat_ymin, feat_xmin,
-                                            feat_ymax, feat_xmax])
+                                            feat_ymax, feat_xmax],
+                                           # shape_invariants=
+                                           # [[tf.shape(i)], [tf.TensorShape([None])], [tf.TensorShape([None])],
+                                           #  [tf.TensorShape([None])], [tf.TensorShape([None])],
+                                           #  [tf.TensorShape([None])], [tf.TensorShape([None])]]
+                                           )
     # Transform to center / size.
     feat_cy = (feat_ymax + feat_ymin) / 2.
     feat_cx = (feat_xmax + feat_xmin) / 2.
@@ -151,43 +148,61 @@ def tf_ssd_bboxes_encode(labels,
       (target_labels, target_localizations, target_scores):
         Each element is a list of target Tensors.
     """
-    with tf.name_scope(scope):
-        target_labels = []
-        target_localizations = []
-        target_scores = []
+    with tf.variable_scope(scope):
+        batch_labels = []
+        batch_localizations = []
+        batch_scores = []
         for i, anchors_layer in enumerate(anchors):
-            with tf.name_scope('bboxes_encode_block_%i' % i):
-                t_labels, t_loc, t_scores = \
-                    tf_ssd_bboxes_encode_layer(labels, bboxes, anchors_layer, num_classes, dtype)
-                target_labels.append(t_labels)
-                target_localizations.append(t_loc)
-                target_scores.append(t_scores)
-        return target_labels, target_localizations, target_scores
+            with tf.variable_scope('bboxes_encode_block_%i' % i):
+
+                target_labels = []
+                target_localizations = []
+                target_scores = []
+                for b in range(0,labels.get_shape()[0]):
+
+                    t_labels, t_loc, t_scores = \
+                        tf_ssd_bboxes_encode_layer(labels[b], bboxes[b], anchors_layer, num_classes, dtype)
+                    target_labels.append(t_labels)
+                    target_localizations.append(t_loc)
+                    target_scores.append(t_scores)
+
+                layer_labels=tf.stack(target_labels)
+                layer_localizations=tf.stack(target_localizations)
+                layer_scores=tf.stack(target_scores)
+
+                batch_labels.append(layer_labels)
+                batch_localizations.append(layer_localizations)
+                batch_scores.append(layer_scores)
 
 
-feature_map_sizes = [64, 32, 16, 8, 4, 2, 1]
-numclasses = 2
-aspect_ratio = [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0]
-scales = getscales(7)
-anchors = []
-labels = tf.placeholder(tf.int64, (None))
-bboxes = tf.placeholder(tf.float32, (None, 4))
+        return batch_labels, batch_localizations, batch_scores
 
 
-for i, width in enumerate(feature_map_sizes):
-    encoded_bbox = []
-    encoded_class = []
-    encoded_iou = []
-
-    anchors.append(gen_anchor_for_1_layer(width, scales[i], aspect_ratio))
-def func():
-    list_target=[]
-    for a in anchors:
-        list_target.append(tf_ssd_bboxes_encode(labels, bboxes, a, numclasses))
-
-step=func()
-with tf.Session() as sess:
-    sess.run(step, feed_dict={labels: [0],
-                           bboxes: [44, 44, 88, 88],
-                           anchors:anchors
-                           })
+#
+# feature_map_sizes = [64, 32, 16, 8, 4, 2, 1]
+# numclasses = 2
+# aspect_ratio = [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0]
+# scales = getscales(7)
+# anchors = []
+# labels = tf.placeholder(tf.int64, (None,1))
+# bboxes = tf.placeholder(tf.float32, (None, 4))
+#
+# anchors = get_anchors_all_layers(feature_map_sizes, scales, aspect_ratio)
+#
+#
+# def func():
+#     list_target = []
+#     for a in anchors:
+#         list_target.append(tf_ssd_bboxes_encode(labels, bboxes, anchors, numclasses))
+#     return list_target
+#
+# step = func()
+# with tf.Session() as sess:
+#     sess.run(step, feed_dict={labels: [[1], [1]],
+#                               bboxes: [[44, 44, 88, 88], [5, 5, 77, 77]],
+#                               })
+def get_batch_anchors(labels,
+                      bboxes,
+                      anchors,
+                      num_classes):
+    return
