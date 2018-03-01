@@ -69,7 +69,7 @@ anchors = get_anchors_all_layers(feature_map_sizes, ssd500.scales, aspect_ratio)
 
 gt_cls, gt_reg, gy_reg = tf_ssd_bboxes_encode(labels_plc, reg_bboxes_plc, anchors, numclasses)
 # gt_cls[0]=tf.stack((gt_cls[0],gt_cls[0]),axis=0)
-loss_op = ssd_losses(ssd500.cls, ssd500.regr, gt_cls, gt_reg, gy_reg)
+loss_op = tloss(ssd500.cls, ssd500.regr, gt_cls, gt_reg)
 
 optimizer = tf.train.AdamOptimizer(lr)
 train_step = optimizer.minimize(loss_op)
@@ -126,7 +126,7 @@ with tf.Session(config=session_config) as sess:
                                                              labels_plc: labels,
                                                              })
 
-        if start % 1 == 0:
+        if start % 100 == 0:
             s = sess.run(mergedsummary, feed_dict={train_batch: img,
                                                    reg_bboxes_plc: bboxes,
                                                    labels_plc: labels,
