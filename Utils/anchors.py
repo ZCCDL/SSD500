@@ -8,8 +8,8 @@ import tensorflow as tf
 def getscales(m):
     scales = []
     for k in range(1, m + 1):
-        min = 0.015
-        max = 0.1
+        min = 0.1
+        max = 0.9
         scales.append((min + (((max - min) / (m - 1)) * (k - 1))))
     #print("Scales=",scales)
     return scales

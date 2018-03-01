@@ -171,5 +171,6 @@ def ssd_losses(logits, localisations,
             tf.add_to_collection('EXTRA_LOSSES', total_cross_neg)
             tf.add_to_collection('EXTRA_LOSSES', total_cross)
             tf.add_to_collection('EXTRA_LOSSES', total_loc)
+            tf.summary.scalar("Loss",total_loc+total_cross)
 
             return total_loc+total_cross
