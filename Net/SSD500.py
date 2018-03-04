@@ -21,10 +21,9 @@ class SSD500:
         print(self.scales)
 
     def inference(self):
-        conv4 = self.conv4_3
-
         featurelayers = {}
 
+        conv4 = self.conv4_3
         featurelayers["conv4"] = conv4
 
         print("conv4=", conv4.get_shape())
@@ -109,7 +108,9 @@ class SSD500:
             logits = conv3(feature_map, in_filters, out_filters_class, [1, 1, 1, 1], activation=None)
             shape = logits.get_shape().as_list()[:-1] + [num_ratios, classes]
             logits = tf.reshape(logits, shape)
+
             print("class_score=", logits.get_shape())
+
             self.cls.append(logits)
             # self.pred.append(tf.arg_max(tf.nn.softmax(logits),dimension=4))
 

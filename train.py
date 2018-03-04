@@ -58,7 +58,7 @@ train_batch = tf.placeholder(dtype=tf.float32, shape=[batchsize, 512, 512, 3])
 vgg = VGG()
 conv4_3, conv5_3 = vgg.inference(train_batch)
 ssd500 = SSD500(conv4_3=conv4_3, pool5=conv5_3, num_classes=numclasses)
-ssdinfer = ssd500.inference()
+cls, regr, pred = ssd500.inference()
 # vgg.load("dsf")
 
 
@@ -67,9 +67,10 @@ reg_bboxes_plc = tf.placeholder(dtype=tf.float32, shape=[batchsize, None, 4], na
 
 anchors = get_anchors_all_layers(feature_map_sizes, ssd500.scales, aspect_ratio)
 
-gt_cls, gt_reg, gy_reg = tf_ssd_bboxes_encode(labels_plc, reg_bboxes_plc, anchors, numclasses)
+gt_cls, gt_reg, gt_scores = tf_ssd_bboxes_encode(labels_plc, reg_bboxes_plc, anchors, numclasses)
 # gt_cls[0]=tf.stack((gt_cls[0],gt_cls[0]),axis=0)
-loss_op = tloss(ssd500.cls, ssd500.regr, gt_cls, gt_reg)
+#loss_op = tloss(cls, regr, gt_cls, gt_reg)
+loss_op = ssd_losses(cls, regr, gt_cls, gt_reg,gt_scores)
 
 optimizer = tf.train.AdamOptimizer(lr)
 train_step = optimizer.minimize(loss_op)
@@ -98,35 +99,14 @@ with tf.Session(config=session_config) as sess:
         img, labels, bboxes = prepare_batch(imgdir, groundtruth, batchsize)
 
         print(img[0].shape, end="")
-        # print(img)
-        # encode the ground truth into anchors
-        # batch_encodes_c, batch_encodes_r, batch_encodes_iou = encode_layers(batchsize, labels, feature_map_sizes,
-        #                                                                     ssd500.scales, aspect_ratio)
-
-        # batch_encodes_c[0][batch_encodes_c[0] > 0] = 1
-        # batch_encodes_r[0][batch_encodes_r[0] > 0] = 1
-
-        # visual(img[0],batch_encodes_r[0],batch_encodes_iou,aspect_ratio,getscales(7))
-
-        # img=np.zeros((2,512,512,3),dtype=np.float32)
-
-        #print(labels)
-        #print(bboxes)
-        # labels = [
-        #     [[1], [1], [1]],
-        #     [[1], [0], [0]]]
-        # bboxes = [
-        #     [[1.0, 1, 5, 6], [1, 1, 55, 66],[0, 0, 0, 0]],
-        #     [[1., 4., 7.7, 7.7], [0, 0, 0, 0],[0, 0, 0, 0]]
-        # ]
-        # print(bbox78)
-
-        _, loss = sess.run([train_step, loss_op], feed_dict={train_batch: img,
+        print(labels)
+        _, loss,gt_scores = sess.run([train_step, loss_op,gt_scores], feed_dict={train_batch: img,
                                                              reg_bboxes_plc: bboxes,
                                                              labels_plc: labels,
                                                              })
+        print(gt_scores)
 
-        if start % 100 == 0:
+        if start % 10 == 0:
             s = sess.run(mergedsummary, feed_dict={train_batch: img,
                                                    reg_bboxes_plc: bboxes,
                                                    labels_plc: labels,
