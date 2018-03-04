@@ -131,7 +131,7 @@ def equilize(batch_labels,batch_bboxes):
     for i,batch in enumerate(batch_labels):
         for j in range(len(batch),max):
             batch_labels[i].append([0])
-            batch_bboxes[i].append([0.01,0.01,0.01,0.01])
+            batch_bboxes[i].append([0.0,0.0,0.0,0.0])
 
 
 

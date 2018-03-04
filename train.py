@@ -61,9 +61,9 @@ ssd500 = SSD500(conv4_3=conv4_3, pool5=conv5_3, num_classes=numclasses)
 cls, regr, pred = ssd500.inference()
 # vgg.load("dsf")
 
-
 labels_plc = tf.placeholder(dtype=tf.int64, shape=[batchsize, None, 1], name="labels")
 reg_bboxes_plc = tf.placeholder(dtype=tf.float32, shape=[batchsize, None, 4], name="bboxes")
+
 
 anchors = get_anchors_all_layers(feature_map_sizes, ssd500.scales, aspect_ratio)
 
@@ -100,11 +100,11 @@ with tf.Session(config=session_config) as sess:
 
         print(img[0].shape, end="")
         print(labels)
-        _, loss,gt_scores = sess.run([train_step, loss_op,gt_scores], feed_dict={train_batch: img,
+        _, loss = sess.run([train_step, loss_op], feed_dict={train_batch: img,
                                                              reg_bboxes_plc: bboxes,
                                                              labels_plc: labels,
                                                              })
-        print(gt_scores)
+        #print(gt_scores)
 
         if start % 10 == 0:
             s = sess.run(mergedsummary, feed_dict={train_batch: img,
